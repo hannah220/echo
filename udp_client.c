@@ -44,15 +44,19 @@ int main(int argc, char *argv[])
   for (;;) {
   printf("enter message\n");
   fgets(send_struct.msg, 31, stdin);
+  
   send_struct.seq = seq;
   
-  printf("send seq = %d\n", seq);
   if ((count = sendto(s, &send_struct, sizeof(struct msg_echo), 0, (struct sockaddr *)&skt, sizeof(skt))) < 0) {
     perror("sendto");
     close(s);
     exit(1);
   }
   sktlen = sizeof skt;
+if (strncmp(send_struct.msg, "FIN", 3) == 0) {
+	exit(0);
+  }
+
   if ((count = recvfrom(s, &recv_struct, sizeof(struct msg_echo), 0, (struct sockaddr *)&skt, &sktlen)) < 0) {
     perror("recvfrom");
     close(s);
@@ -63,6 +67,7 @@ int main(int argc, char *argv[])
   if (seq == 10) {
 	  exit(0);
   }
+ 
   }
     
   close(s);

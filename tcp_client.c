@@ -7,21 +7,30 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-int main()
+struct msg_echo {
+	unsigned short seq;
+	unsigned short reserve;
+	char msg[32];
+};
+
+int main(int argc, char *argv[])
 {
 	int s;
+	int seq = 0;
 	struct sockaddr_in skt;
 	int count;
-	in_port_t port = 49152;
+	int port = atoi(argv[2]);
 	char *ip_buf;
 	char msg_buf[100];
 	char recv_buf[100];
+	struct msg_echo send_struct;
+	struct msg_echo recv_struct;
 	
 	if ((s = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket");
 		exit(1);
 	}
-	ip_buf = "127.0.0.1";
+	ip_buf = argv[1];
 	memset(&skt, 0, sizeof skt);
 	skt.sin_family = AF_INET;
 	skt.sin_port = htons(port);
@@ -32,28 +41,29 @@ int main()
 	  exit(1);
 	}
 	
-	do {
-	  printf("input message to send\n");
+	for (;;) {
+	  printf("enter message\n");
 	  fgets(msg_buf, 30, stdin);
-	  
-	  if ((int)(*msg_buf) == -1) {
-	    if ((count = send(s, "FIN", 4 * sizeof(char), 0)) < 0) {
+ 	  
+          send_struct.seq = seq;	  
+	  strcpy(send_struct.msg, msg_buf);
+	    if ((count = send(s, &send_struct, sizeof(struct msg_echo), 0)) < 0) {
 	      perror("send");
 	      exit(1);
 	    }
-	  } else {
-	    if ((count = send(s, msg_buf, sizeof(msg_buf), 0)) < 0) {
-	      perror("send");
-	      exit(1);
-	    }
+          if (strncmp(msg_buf, "FIN", 3) == 0) {
+		  exit(0);
 	  }
-	  
-	  if ((count= recv(s, recv_buf, sizeof(recv_buf), 0)) < 0) {
+	  if ((count= recv(s, &recv_struct, sizeof(struct msg_echo), 0)) < 0) {
 	    perror("recv");
 	    exit(1);
 	  }
-	  printf("received message: %s\n", recv_buf);
-	} while (strncmp(recv_buf, "FIN", 3) != 0);
+	  seq = (recv_struct.seq)++;
+	  printf("received message: %s, sequence number = %d\n", recv_struct.msg, recv_struct.seq);
+	  if (seq == 10) {
+		  exit(0);
+	  }
+	} 
 
 	close(s);
 	
