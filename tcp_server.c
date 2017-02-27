@@ -72,7 +72,10 @@ void execute(int s1)
 	perror("recv");
 	exit(1);
       }
-      
+    if (recv_struct.seq == 9) {
+	    close(s1);
+	    exit(0);
+    }	    
       printf("received message: %s, sequence number = %d\n", recv_struct.msg, recv_struct.seq);
       if (strncmp(recv_struct.msg, "FIN", 3) == 0) {
 	      close(s1);

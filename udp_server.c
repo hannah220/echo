@@ -49,9 +49,6 @@ int main(int argc, char *argv[])
     //printf("partner's ip address: %s\n", inet_ntoa(skt.sin_addr));
     //printf("partner's port number: %hu\n", ntohs(skt.sin_port));
     printf("received message: %s, sequence number = %d\n", recv_struct.msg, recv_struct.seq);
-    if (strncmp(recv_struct.msg, "FIN", 3) == 0) {
-	    exit(0);
-    }
     strcpy(send_struct.msg, recv_struct.msg);
     send_struct.seq = recv_struct.seq + 1;
     if ((count = sendto(s, &send_struct, sizeof(struct msg_echo), 0, (struct sockaddr *) &skt, sizeof skt)) < 0) {
@@ -62,3 +59,5 @@ int main(int argc, char *argv[])
   close(s);
   return 0;
 }
+
+
